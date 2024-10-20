@@ -7,11 +7,13 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import com.example.dessertclicker.R
+import com.example.dessertclicker.data.Datasource.dessertList
 import com.example.dessertclicker.data.DessertUiState
 import com.example.dessertclicker.model.Dessert
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 class DessertViewModel:ViewModel() {
     private val _uiState = MutableStateFlow(DessertUiState())
@@ -20,14 +22,16 @@ class DessertViewModel:ViewModel() {
     /**
      * Determine which dessert to show.
      */
-    fun determineDessertToShow(
-        desserts: List<Dessert>,
-        dessertsSold: Int
-    ): Dessert {
-        var dessertToShow = desserts.first()
-        for (dessert in desserts) {
-            if (dessertsSold >= dessert.startProductionAmount) {
-                dessertToShow = dessert
+    fun determineDessertToShow(desserts: List<Dessert>, dessertsSold: Int) {
+        for (i in desserts.indices) {
+            if (dessertsSold >= desserts[i].startProductionAmount) {
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        currentDessertIndex = i,
+                        currentDessertImg = dessertList[i].imageId,
+                        currentDessertPrice = dessertList[i].price
+                    )
+                }
             } else {
                 // The list of desserts is sorted by startProductionAmount. As you sell more desserts,
                 // you'll start producing more expensive desserts as determined by startProductionAmount
@@ -36,34 +40,40 @@ class DessertViewModel:ViewModel() {
                 break
             }
         }
-
-        return dessertToShow
     }
 
-    /**
-     * Share desserts sold information using ACTION_SEND intent
-     */
-    private fun shareSoldDessertsInformation(intentContext: Context, dessertsSold: Int, revenue: Int) {
-        val sendIntent = Intent().apply {
-            action = Intent.ACTION_SEND
-            putExtra(
-                Intent.EXTRA_TEXT,
-                intentContext.getString(R.string.share_text, dessertsSold, revenue)
+    fun updateState(newRevenue:Int, newDessertsSold:Int) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                revenue = newRevenue,
+                dessertsSold = newDessertsSold
             )
-            type = "text/plain"
-        }
-
-        val shareIntent = Intent.createChooser(sendIntent, null)
-
-        try {
-            ContextCompat.startActivity(intentContext, shareIntent, null)
-        } catch (e: ActivityNotFoundException) {
-            Toast.makeText(
-                intentContext,
-                intentContext.getString(R.string.sharing_not_available),
-                Toast.LENGTH_LONG
-            ).show()
         }
     }
 
+        /**
+         * Share desserts sold information using ACTION_SEND intent
+         */
+        fun shareSoldDessertsInformation(intentContext: Context, dessertsSold: Int, revenue: Int) {
+            val sendIntent = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(
+                    Intent.EXTRA_TEXT,
+                    intentContext.getString(R.string.share_text, dessertsSold, revenue)
+                )
+                type = "text/plain"
+            }
+
+            val shareIntent = Intent.createChooser(sendIntent, null)
+
+            try {
+                ContextCompat.startActivity(intentContext, shareIntent, null)
+            } catch (e: ActivityNotFoundException) {
+                Toast.makeText(
+                    intentContext,
+                    intentContext.getString(R.string.sharing_not_available),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
 }

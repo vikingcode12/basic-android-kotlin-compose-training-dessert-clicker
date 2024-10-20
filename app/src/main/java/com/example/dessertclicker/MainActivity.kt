@@ -70,6 +70,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import com.example.dessertclicker.data.Datasource
 import com.example.dessertclicker.model.Dessert
+import com.example.dessertclicker.ui.DessertScreen
 import com.example.dessertclicker.ui.theme.DessertClickerTheme
 
 // Tag for logging
@@ -125,6 +126,10 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@Composable
+private fun DessertClickerApp(desserts: List<Dessert>) {
+    DessertScreen(desserts)
+}
 
 
 @Preview

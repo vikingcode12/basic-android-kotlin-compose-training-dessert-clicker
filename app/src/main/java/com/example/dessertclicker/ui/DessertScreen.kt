@@ -50,36 +50,18 @@ import com.example.dessertclicker.model.Dessert
  */
 
 @Composable
-fun DesertScreen(dessertViewModel:DessertViewModel = viewModel()) {
-    val desertUiState by dessertViewModel.uiState.collectAsState()
-}
-@Composable
-private fun DessertClickerApp(
-    desserts: List<Dessert>
-) {
-
-    var revenue by rememberSaveable { mutableStateOf(0) }
-    var dessertsSold by rememberSaveable { mutableStateOf(0) }
-
-    val currentDessertIndex by rememberSaveable { mutableStateOf(0) }
-
-    var currentDessertPrice by rememberSaveable {
-        mutableStateOf(desserts[currentDessertIndex].price)
-    }
-    var currentDessertImageId by rememberSaveable {
-        mutableStateOf(desserts[currentDessertIndex].imageId)
-    }
-
+fun DessertScreen(desserts:List<Dessert>, dessertViewModel:DessertViewModel = viewModel()) {
+    val dessertUiState by dessertViewModel.uiState.collectAsState()
     Scaffold(
         topBar = {
             val intentContext = LocalContext.current
             val layoutDirection = LocalLayoutDirection.current
             DessertClickerAppBar(
                 onShareButtonClicked = {
-                    shareSoldDessertsInformation(
+                    dessertViewModel.shareSoldDessertsInformation(
                         intentContext = intentContext,
-                        dessertsSold = dessertsSold,
-                        revenue = revenue
+                        dessertsSold = dessertUiState.dessertsSold,
+                        revenue = dessertUiState.revenue
                     )
                 },
                 modifier = Modifier
@@ -97,19 +79,15 @@ private fun DessertClickerApp(
         }
     ) { contentPadding ->
         DessertClickerScreen(
-            revenue = revenue,
-            dessertsSold = dessertsSold,
-            dessertImageId = currentDessertImageId,
+            revenue = dessertUiState.revenue,
+            dessertsSold = dessertUiState.dessertsSold,
+            dessertImageId = dessertUiState.currentDessertImg,
             onDessertClicked = {
-
-                // Update the revenue
-                revenue += currentDessertPrice
-                dessertsSold++
+                dessertViewModel.updateState(dessertUiState.revenue+dessertUiState.currentDessertPrice, dessertUiState.dessertsSold+1)
 
                 // Show the next dessert
-                val dessertToShow = determineDessertToShow(desserts, dessertsSold)
-                currentDessertImageId = dessertToShow.imageId
-                currentDessertPrice = dessertToShow.price
+                dessertViewModel.determineDessertToShow(desserts, dessertUiState.dessertsSold)
+
             },
             modifier = Modifier.padding(contentPadding)
         )
